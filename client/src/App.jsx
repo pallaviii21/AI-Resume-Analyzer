@@ -7,8 +7,7 @@ export default function App() {
       <nav className="navbar">
         <div className="container navbar-inner">
           <a href="/" className="navbar-logo">
-            <div className="logo-icon">🤖</div>
-            <span>ResumeAI</span>
+            <span>AI Resume Analyzer</span>
           </a>          
         </div>
       </nav>
