@@ -38,8 +38,12 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: err.message || 'Internal Server Error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`✅  Server running on http://localhost:${PORT}`);
-  console.log(`🗄️   Supabase URL: ${process.env.SUPABASE_URL || '⚠️  NOT SET'}`);
-  console.log(`🧠  Groq API key:   ${process.env.GROQ_API_KEY ? '✓ set' : '⚠️  NOT SET — using mock mode'}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`✅  Server running on http://localhost:${PORT}`);
+    console.log(`🗄️   Supabase URL: ${process.env.SUPABASE_URL || '⚠️  NOT SET'}`);
+    console.log(`🧠  Groq API key:   ${process.env.GROQ_API_KEY ? '✓ set' : '⚠️  NOT SET — using mock mode'}`);
+  });
+}
+
+module.exports = app;
