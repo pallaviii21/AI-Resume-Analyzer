@@ -29,7 +29,7 @@ async function extractText(fileBuffer, mimetype, originalname) {
   if (isPdf) {
     const { extractText } = require('unpdf');
     const { text } = await extractText(new Uint8Array(fileBuffer));
-    return text;
+    return Array.isArray(text) ? text.join('\n') : String(text || '');
   }
 
   if (isDocx) {
