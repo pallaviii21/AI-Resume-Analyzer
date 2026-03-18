@@ -1,10 +1,7 @@
 const fs = require('fs');
 require('dotenv').config();
 
-// Polyfill DOMMatrix for Node.js edge/serverless environments (required for pdf-parse)
-if (typeof DOMMatrix === 'undefined') {
-  global.DOMMatrix = require('@thednp/dommatrix');
-}
+// No need for DOMMatrix polyfill anymore using unpdf
 
 /**
  * Extracts plain text from a PDF, DOCX, or image (PNG/JPG) file using a buffer.
@@ -30,11 +27,9 @@ async function extractText(fileBuffer, mimetype, originalname) {
     /\.(png|jpg|jpeg|webp)$/i.test(originalname);
 
   if (isPdf) {
-    const { PDFParse } = require('pdf-parse');
-    const parser = new PDFParse({ data: fileBuffer });
-    const data = await parser.getText();
-    await parser.destroy();
-    return data.text;
+    const { extractText } = require('unpdf');
+    const { text } = await extractText(new Uint8Array(fileBuffer));
+    return text;
   }
 
   if (isDocx) {
