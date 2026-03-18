@@ -21,7 +21,7 @@ const uploadAndAnalyze = async (req, res) => {
     }
 
     // 1. Extract text from the uploaded file
-    const rawText = await extractText(req.file.path, req.file.mimetype);
+    const rawText = await extractText(req.file.buffer, req.file.mimetype, req.file.originalname);
 
     if (!rawText || rawText.trim().length < 50) {
       return res
@@ -65,10 +65,8 @@ const uploadAndAnalyze = async (req, res) => {
       console.warn('Supabase not configured — skipping DB save.');
     }
 
-    // 4. Clean up uploaded file
-    try {
-      fs.unlinkSync(req.file.path);
-    } catch (_) {}
+    // 4. Memory cleanup
+    req.file.buffer = null;
 
     return res.status(200).json({
       id: savedId,

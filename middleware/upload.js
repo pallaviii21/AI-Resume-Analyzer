@@ -1,22 +1,5 @@
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-
-const os = require('os');
-
-// Ensure uploads directory exists. On Vercel, only /tmp is writable.
-const uploadDir = process.env.VERCEL ? path.join(os.tmpdir(), 'uploads') : path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadDir),
-  filename: (_req, file, cb) => {
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `${unique}${path.extname(file.originalname)}`);
-  },
-});
+const storage = multer.memoryStorage();
 
 const ALLOWED_TYPES = [
   'application/pdf',
