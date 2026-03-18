@@ -1,6 +1,11 @@
 const fs = require('fs');
 require('dotenv').config();
 
+// Polyfill DOMMatrix for Node.js edge/serverless environments (required for pdf-parse)
+if (typeof DOMMatrix === 'undefined') {
+  global.DOMMatrix = require('@thednp/dommatrix');
+}
+
 /**
  * Extracts plain text from a PDF, DOCX, or image (PNG/JPG) file using a buffer.
  * Images are processed via OpenAI Vision API.
