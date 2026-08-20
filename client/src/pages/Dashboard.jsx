@@ -1,32 +1,39 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import UploadResume from '../components/UploadResume';
 import JobDescription from '../components/JobDescription';
 import ResultCard from '../components/ResultCard';
 import { analyzeResume } from '../services/api';
 
 export default function Dashboard() {
-  const [step, setStep] = useState(1); // 1=upload, 2=describe, 3=results
   const [resumeFile, setResumeFile] = useState(null);
+  const [jobDescription, setJobDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
+  const workspaceRef = useRef(null);
+
+  const handleScrollToWorkspace = () => {
+    if (workspaceRef.current) {
+      workspaceRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const handleFileSelected = (file) => {
     setResumeFile(file);
-    setStep(2);
-    setResult(null);
     setError(null);
   };
 
-  const handleAnalyze = async (jobDescription) => {
+  const handleAnalyze = async (jdText) => {
     if (!resumeFile) return;
+    setJobDescription(jdText);
     setLoading(true);
     setError(null);
 
     try {
-      const data = await analyzeResume(resumeFile, jobDescription);
+      const data = await analyzeResume(resumeFile, jdText);
       setResult(data);
-      setStep(3);
+      handleScrollToWorkspace();
     } catch (err) {
       setError(
         err?.response?.data?.error ||
@@ -38,102 +45,201 @@ export default function Dashboard() {
     }
   };
 
+  const handleReset = () => {
+    setResult(null);
+    handleScrollToWorkspace();
+  };
+
   return (
     <main>
-      {/* Hero */}
-      <section className="hero container">
-        <div className="hero-badge">
-          <span>⚡</span>
-          <span>AI-Powered</span>
-        </div>
-        <h1>Analyze Your Resume<br />Against Any Job</h1>
-        <p>
-          Upload your resume, paste a job description, and get an instant AI analysis —
-          match score, skill gaps, and actionable tips.
-        </p>
+      {/* ─── Hero Section (Minimalist Split Inspired by Reference) ─── */}
+      <section className="hero-section container">
+        <div className="hero-grid">
+          
+          {/* Left Hero Column */}
+          <div className="hero-content">
+            <div className="ai-badge">
+              <span>✨</span>
+              <span>AI Powered</span>
+            </div>
 
-        {/* Step pills */}
-        <div className="steps-row">
-          <div className={`step-pill ${step === 1 ? 'active' : step > 1 ? 'done' : ''}`}>
-            <span className="step-num">{step > 1 ? '✓' : '1'}</span>
-            Upload Resume
+            <h1 className="hero-title">Resume analyser</h1>
+            <p className="hero-subtitle">See how your resume performs against any target role</p>
+
+            <ul className="hero-features-list">
+              <li className="hero-feature-item">
+                <span className="hero-check">✓</span>
+                <span>Get resume strength backed by AI insights</span>
+              </li>
+              <li className="hero-feature-item">
+                <span className="hero-check">✓</span>
+                <span>Find key improvement areas & missing skill gaps</span>
+              </li>
+              <li className="hero-feature-item">
+                <span className="hero-check">✓</span>
+                <span>Improve shortlisting chances with ATS readiness score</span>
+              </li>
+              <li className="hero-feature-item">
+                <span className="hero-check">✓</span>
+                <span>Generate updated tailored resume & export PDF</span>
+              </li>
+            </ul>
+
+            <div className="hero-cta-group">
+              <button className="btn-hero-upload" onClick={handleScrollToWorkspace}>
+                <span>Upload CV</span>
+                <span>→</span>
+              </button>
+              <span className="hero-formats-hint">File formats: pdf, docx | upto 10 mb</span>
+            </div>
           </div>
-          <span className="step-arrow">›</span>
-          <div className={`step-pill ${step === 2 ? 'active' : step > 2 ? 'done' : ''}`}>
-            <span className="step-num">{step > 2 ? '✓' : '2'}</span>
-            Job Description
+
+          {/* Right Hero Visual Mockup */}
+          <div className="hero-visual-container">
+            <div className="mockup-cv-sheet">
+              {/* Top Floating Badge: CV Strength */}
+              <div className="floating-badge badge-top-right">
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.78rem', color: '#92400e' }}>CV Strength</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, background: '#fef3c7', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                    High (88%)
+                  </span>
+                </div>
+                <div className="strength-bar-bg">
+                  <div className="strength-bar-fill"></div>
+                </div>
+              </div>
+
+              {/* Skeleton CV Content */}
+              <div className="mockup-skeleton-header">
+                <div className="mockup-avatar"></div>
+                <div className="mockup-lines">
+                  <div className="mockup-line short"></div>
+                  <div className="mockup-line med"></div>
+                </div>
+              </div>
+
+              <div className="mockup-skeleton-body">
+                <div className="mockup-line full"></div>
+                <div className="mockup-line full"></div>
+                <div className="mockup-line med"></div>
+              </div>
+
+              <div className="mockup-skeleton-body" style={{ marginTop: '0.8rem' }}>
+                <div className="mockup-line short" style={{ background: '#e2e8f0' }}></div>
+                <div className="mockup-line full"></div>
+                <div className="mockup-line med"></div>
+              </div>
+
+              {/* Middle Right Floating Badge */}
+              <div className="floating-badge badge-mid-right">
+                <span>✓</span>
+                <span>What's working</span>
+              </div>
+
+              {/* Bottom Left Floating Badge */}
+              <div className="floating-badge badge-bottom-left">
+                <span>⊘</span>
+                <span>Improvement areas</span>
+              </div>
+            </div>
           </div>
-          <span className="step-arrow">›</span>
-          <div className={`step-pill ${step === 3 ? 'done' : ''}`}>
-            <span className="step-num">{step === 3 ? '✓' : '3'}</span>
-            AI Analysis
+
+        </div>
+      </section>
+
+      {/* ─── "Here's how it works" Section ─── */}
+      <section className="how-it-works-section container">
+        <div className="section-heading-center">
+          <h2>Here's how resume analyser works</h2>
+        </div>
+
+        <div className="how-it-works-grid">
+          <div className="how-card">
+            <div className="how-card-num">1</div>
+            <h3>Upload your CV</h3>
+            <p>Upload your most recent resume in PDF or DOCX format to begin your AI analysis.</p>
+          </div>
+
+          <div className="how-card">
+            <div className="how-card-num">2</div>
+            <h3>We analyse against JD</h3>
+            <p>AI compares your resume across key parameters like keyword gaps, skills, and relevance.</p>
+          </div>
+
+          <div className="how-card">
+            <div className="how-card-num">3</div>
+            <h3>Get updated resume & PDF</h3>
+            <p>View detailed insights and download a refreshed, tailored resume with missing skills added.</p>
           </div>
         </div>
       </section>
 
-      {/* Main input area */}
-      {!result && (
-        <section className="container" style={{ paddingBottom: '3rem' }}>
-          <div className="two-col">
-            {/* Upload card */}
-            <div className="card fade-up">
-              <div className="card-header">
-                <div className="card-icon purple">📄</div>
-                <div>
-                  <h3>Your Resume</h3>
-                  <p style={{ fontSize: '0.8rem', marginTop: '0.1rem' }}>PDF or DOCX</p>
-                </div>
-              </div>
-              <div className="card-body">
-                <UploadResume
-                  onFileSelected={handleFileSelected}
-                  selectedFile={resumeFile}
-                />
-              </div>
+      {/* ─── Interactive Workspace Section ─── */}
+      <section ref={workspaceRef} className="workspace-section container" id="workspace">
+        <div className="workspace-card-main">
+          
+          <div className="workspace-header">
+            <div className="workspace-header-title">
+              <h2>{result ? 'Analysis & Tailored PDF Report' : 'Analyze Your Resume'}</h2>
+              <p>{result ? 'Review your score and download your updated CV' : 'Provide your resume and job description to get started'}</p>
             </div>
-
-            {/* Job description card */}
-            <div className="card fade-up" style={{ animationDelay: '0.1s' }}>
-              <div className="card-header">
-                <div className="card-icon cyan">💼</div>
-                <div>
-                  <h3>Job Description</h3>
-                  <p style={{ fontSize: '0.8rem', marginTop: '0.1rem' }}>
-                    Paste the full JD
-                  </p>
-                </div>
-              </div>
-              <div className="card-body">
-                <JobDescription
-                  onAnalyze={handleAnalyze}
-                  loading={loading}
-                  disabled={!resumeFile}
-                />
-                {!resumeFile && (
-                  <p style={{ fontSize: '0.8rem', marginTop: '0.7rem', textAlign: 'center' }}>
-                    ← Upload your resume first
-                  </p>
-                )}
-              </div>
-            </div>
+            {result && (
+              <button className="btn btn-secondary" onClick={handleReset} style={{ fontSize: '0.82rem', padding: '0.45rem 1rem' }}>
+                ← Analyze another job
+              </button>
+            )}
           </div>
 
-          {/* Error */}
-          {error && (
-            <div className="error-banner" style={{ marginTop: '1.5rem' }}>
-              <span>❌</span>
-              <span>{error}</span>
-            </div>
-          )}
-        </section>
-      )}
+          <div className="workspace-body">
+            {!result ? (
+              <div>
+                <div className="workspace-grid-inputs">
+                  {/* Upload Block */}
+                  <div>
+                    <div className="input-block-header">
+                      <label>1. Upload Resume</label>
+                      {resumeFile && (
+                        <span style={{ fontSize: '0.75rem', color: 'var(--clr-success)', fontWeight: 700 }}>
+                          ✓ Loaded
+                        </span>
+                      )}
+                    </div>
+                    <UploadResume
+                      onFileSelected={handleFileSelected}
+                      selectedFile={resumeFile}
+                    />
+                  </div>
 
-      {/* Results */}
-      {result && (
-        <section className="container" style={{ paddingBottom: '4rem' }}>
-          <ResultCard result={result} />
-        </section>
-      )}
+                  {/* Job Description Block */}
+                  <div>
+                    <JobDescription
+                      onAnalyze={handleAnalyze}
+                      loading={loading}
+                      disabled={!resumeFile}
+                      initialValue={jobDescription}
+                    />
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="error-banner">
+                    <span>❌</span>
+                    <span>{error}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <ResultCard
+                result={result}
+                jobDescription={jobDescription}
+                onAnalyzeAnother={handleReset}
+              />
+            )}
+          </div>
+
+        </div>
+      </section>
     </main>
   );
 }

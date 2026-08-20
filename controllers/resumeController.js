@@ -1,7 +1,7 @@
 const supabase = require('../config/supabase');
 const { extractText } = require('../services/parserService');
-const { analyzeResume } = require('../services/aiService');
-const fs = require('fs');
+const { analyzeResume, generateUpdatedResume } = require('../services/aiService');
+const { createResumePdf } = require('../services/pdfService');
 
 /**
  * POST /api/resume/analyze
@@ -71,6 +71,7 @@ const uploadAndAnalyze = async (req, res) => {
     return res.status(200).json({
       id: savedId,
       fileName: req.file.originalname,
+      rawText,
       matchScore,
       missingSkills,
       suggestions,
@@ -79,6 +80,64 @@ const uploadAndAnalyze = async (req, res) => {
   } catch (err) {
     console.error('uploadAndAnalyze error:', err);
     return res.status(500).json({ error: err.message || 'Internal server error.' });
+  }
+};
+
+/**
+ * POST /api/resume/tailor
+ * Generates an updated resume tailored to the JD with missing skills incorporated.
+ */
+const generateTailoredResumeController = async (req, res) => {
+  try {
+    const { resumeText, jobDescription, missingSkills = [], suggestions = [] } = req.body;
+
+    if (!resumeText || resumeText.trim().length < 30) {
+      return res.status(400).json({ error: 'Resume text is required to generate updated resume.' });
+    }
+
+    if (!jobDescription || jobDescription.trim().length < 20) {
+      return res.status(400).json({ error: 'Job description is required.' });
+    }
+
+    const tailoredData = await generateUpdatedResume(
+      resumeText,
+      jobDescription,
+      missingSkills,
+      suggestions
+    );
+
+    return res.status(200).json(tailoredData);
+  } catch (err) {
+    console.error('generateTailoredResumeController error:', err);
+    return res.status(500).json({ error: err.message || 'Failed to generate tailored resume.' });
+  }
+};
+
+/**
+ * POST /api/resume/download-pdf
+ * Generates and downloads an ATS-compliant PDF for the provided resume data.
+ */
+const downloadResumePdfController = async (req, res) => {
+  try {
+    const resumeData = req.body;
+
+    if (!resumeData || !resumeData.name) {
+      return res.status(400).json({ error: 'Valid resume data object is required.' });
+    }
+
+    const pdfBuffer = await createResumePdf(resumeData);
+
+    const safeName = (resumeData.name || 'Updated_Resume').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const fileName = `${safeName}_Tailored_Resume.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+
+    return res.send(pdfBuffer);
+  } catch (err) {
+    console.error('downloadResumePdfController error:', err);
+    return res.status(500).json({ error: err.message || 'Failed to generate PDF.' });
   }
 };
 
@@ -107,4 +166,10 @@ const getHistory = async (_req, res) => {
   }
 };
 
-module.exports = { uploadAndAnalyze, getHistory };
+module.exports = {
+  uploadAndAnalyze,
+  generateTailoredResumeController,
+  downloadResumePdfController,
+  getHistory,
+};
+
